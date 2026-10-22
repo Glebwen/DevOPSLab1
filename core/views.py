@@ -8,12 +8,22 @@ from django.middleware.csrf import get_token
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.utils.decorators import method_decorator
 
-from .models import Client
-from .serializers import ClientSerializer
+from .models import Client, Bearing, Order
+from .serializers import ClientSerializer, BearingSerializer, OrderSerializer
 
 class ClientViewSet(viewsets.ModelViewSet):
     queryset = Client.objects.all()
     serializer_class = ClientSerializer
+    permission_classes = [IsAuthenticated]
+
+class BearingViewSet(viewsets.ModelViewSet):
+    queryset = Bearing.objects.all()
+    serializer_class = BearingSerializer
+    permission_classes = [IsAuthenticated]
+
+class OrderViewSet(viewsets.ModelViewSet):
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer
     permission_classes = [IsAuthenticated]
 
 @api_view(['GET'])

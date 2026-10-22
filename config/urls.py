@@ -21,6 +21,8 @@ from core import views
 
 router = DefaultRouter()
 router.register(r'clients', views.ClientViewSet)
+router.register(r'bearings', views.BearingViewSet) 
+router.register(r'orders', views.OrderViewSet)     
 
 urlpatterns = [
     path('admin/', admin.site.urls),

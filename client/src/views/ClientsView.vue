@@ -1,16 +1,5 @@
 <template>
   <div>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
-      <div class="container">
-        <a class="navbar-brand" href="#">WebGleb5</a>
-        <div class="d-flex align-items-center text-white ms-auto">
-          <span class="me-3">Привет, <strong>{{ auth.username }}</strong></span>
-          <button @click="handleLogout" class="btn btn-outline-light btn-sm">
-            Выйти
-          </button>
-        </div>
-      </div>
-    </nav>
 
     <div class="container">
       <div class="row">

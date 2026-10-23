@@ -44,12 +44,14 @@ pipeline {
                     if not exist .venv ("${PYTHON}" -m venv .venv)
                     .venv\\Scripts\\python.exe -m pip install -r requirements.txt
                     .venv\\Scripts\\python.exe manage.py migrate
+ 
+                    powershell -Command "Start-Process -FilePath '.\\.venv\\Scripts\\python.exe' -ArgumentList 'manage.py runserver 0.0.0.0:8000' -WindowStyle Hidden -RedirectStandardOutput 'backend.log' -RedirectStandardError 'backend_err.log'"
 
-                    start /B .venv\\Scripts\\python.exe manage.py runserver 0.0.0.0:8000 > backend.log 2>&1
 
                     cd client
                     call npm install
-                    start /B npm run dev > frontend.log 2>&1
+                    
+                    powershell -Command "Start-Process -FilePath 'npm.cmd' -ArgumentList 'run dev' -WindowStyle Hidden -RedirectStandardOutput 'frontend.log' -RedirectStandardError 'frontend_err.log'"
                 """
             }
         }

@@ -50,14 +50,19 @@ pipeline {
                     if not exist .venv ("${PYTHON}" -m venv .venv)
                     .venv\\Scripts\\python.exe -m pip install -r requirements.txt
                     .venv\\Scripts\\python.exe manage.py migrate
-
                     cd client
                     call npm install
                     cd ..
 
-                    start "Backend" /B cmd /c ".venv\\Scripts\\python.exe manage.py runserver 0.0.0.0:8000 > backend.log 2>&1"
+                    schtasks /delete /tn "WebGleb_Backend" /f 2>nul
+                    schtasks /delete /tn "WebGleb_Frontend" /f 2>nul
+
+                    schtasks /create /tn "WebGleb_Backend" /tr "cmd /c cd /d C:\\deploy\\DevOPSLab1 && .venv\\Scripts\\python.exe manage.py runserver 0.0.0.0:8000 > backend.log 2>&1" /sc once /st 23:59 /f
                     
-                    start "Frontend" /B cmd /c "cd client && npm run dev > frontend.log 2>&1"
+                    schtasks /create /tn "WebGleb_Frontend" /tr "cmd /c cd /d C:\\deploy\\DevOPSLab1\\client && npm run dev > frontend.log 2>&1" /sc once /st 23:59 /f
+
+                    schtasks /run /tn "WebGleb_Backend"
+                    schtasks /run /tn "WebGleb_Frontend"
                     
                     ping 127.0.0.1 -n 6 > nul
                 """

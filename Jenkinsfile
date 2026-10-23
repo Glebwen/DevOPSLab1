@@ -49,11 +49,10 @@ pipeline {
                     call npm install
                     cd ..
                     
-                    echo cd /d C:\\deploy\\DevOPSLab1 ^&^& .venv\\Scripts\\python.exe manage.py runserver 0.0.0.0:8000 ^> backend.log 2^>^&1 > C:\\deploy\\run_back.bat
-                    echo cd /d C:\\deploy\\DevOPSLab1\\client ^&^& npm run dev ^> frontend.log 2^>^&1 > C:\\deploy\\run_front.bat
+                    set BUILD_ID=dontKillMe
                     
-                    wmic process call create "cmd.exe /c C:\\deploy\\run_back.bat" >nul
-                    wmic process call create "cmd.exe /c C:\\deploy\\run_front.bat" >nul
+                    start "" /B cmd /c ".venv\\Scripts\\python.exe manage.py runserver 0.0.0.0:8000 > backend.log 2>&1"
+                    start "" /B cmd /c "cd client && npm run dev > frontend.log 2>&1"
                 """
             }
         }

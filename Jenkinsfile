@@ -37,9 +37,19 @@ pipeline {
                         git clone %REPO% C:\\deploy\\DevOPSLab1
                     )
                     cd /d C:\\deploy\\DevOPSLab1
+
+                    FOR /F "tokens=5" %%T IN ('netstat -a -n -o ^| findstr :8000') DO taskkill /F /PID %%T 2>nul
+                    FOR /F "tokens=5" %%T IN ('netstat -a -n -o ^| findstr :5173') DO taskkill /F /PID %%T 2>nul
+
                     if not exist .venv ("${PYTHON}" -m venv .venv)
                     .venv\\Scripts\\python.exe -m pip install -r requirements.txt
                     .venv\\Scripts\\python.exe manage.py migrate
+
+                    start /B .venv\\Scripts\\python.exe manage.py runserver 0.0.0.0:8000 > backend.log 2>&1
+
+                    cd client
+                    call npm install
+                    start /B npm run dev > frontend.log 2>&1
                 """
             }
         }

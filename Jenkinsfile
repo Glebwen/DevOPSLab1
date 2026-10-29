@@ -5,7 +5,6 @@ pipeline {
         PYTHON = 'C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python313\\python.exe'
         VENV = '.venv-ci'
         REPO = 'https://github.com/Glebwen/DevOPSLab1.git'
-        BUILD_ID = 'dontKillMe' 
     }
     
     stages {
@@ -44,11 +43,11 @@ pipeline {
                     )
                     cd /d C:\\deploy\\DevOPSLab1
 
-                    :: Освобождаем порты
+                    :: 1. Останавливаем старые процессы, чтобы освободить порты
                     FOR /F "tokens=5" %%T IN ('netstat -a -n -o ^| findstr :8000') DO taskkill /F /PID %%T 2>nul
                     FOR /F "tokens=5" %%T IN ('netstat -a -n -o ^| findstr :5173') DO taskkill /F /PID %%T 2>nul
 
-                    :: Ставим зависимости
+                    :: 2. Устанавливаем зависимости
                     if not exist .venv ("${PYTHON}" -m venv .venv)
                     .venv\\Scripts\\python.exe -m pip install -r requirements.txt
                     .venv\\Scripts\\python.exe manage.py migrate
@@ -57,13 +56,21 @@ pipeline {
                     call npm install
                     cd ..
 
-                    :: СОЗДАЕМ И ЗАПУСКАЕМ БЭКЕНД В НОВОМ ОКНЕ
-                    start "Django_Deploy" cmd /c ".venv\\Scripts\\python.exe manage.py runserver 0.0.0.0:8000 > backend.log 2>&1"
+                    :: 3. Создаем bat-файл, который запустит серверы
+                    echo @echo off > C:\\deploy\\start_all.bat
+                    echo cd /d C:\\deploy\\DevOPSLab1 >> C:\\deploy\\start_all.bat
+                    echo start "Django Backend" cmd /c ".venv\\Scripts\\python.exe manage.py runserver" >> C:\\deploy\\start_all.bat
+                    echo cd client >> C:\\deploy\\start_all.bat
+                    echo start "Vite Frontend" cmd /c "npm run dev" >> C:\\deploy\\start_all.bat
                     
-                    :: СОЗДАЕМ И ЗАПУСКАЕМ ФРОНТЕНД В НОВОМ ОКНЕ
-                    start "Vite_Deploy" cmd /c "cd client && npm run dev > frontend.log 2>&1"
+                    :: 4. Создаем VBS-скрипт, который запустит этот bat-файл СКРЫТО и отвяжет от Дженкинса
+                    echo Set WshShell = CreateObject("WScript.Shell") > C:\\deploy\\run.vbs
+                    echo WshShell.Run "C:\\deploy\\start_all.bat", 0, False >> C:\\deploy\\run.vbs
                     
-                    :: Даем серверам 5 секунд, чтобы подняться
+                    :: 5. Запускаем VBS. Дженкинс больше не сможет убить эти процессы!
+                    wscript C:\\deploy\\run.vbs
+                    
+                    :: 6. Ждем 5 секунд, чтобы серверы успели подняться
                     ping 127.0.0.1 -n 6 > nul
                 """
             }

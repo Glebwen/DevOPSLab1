@@ -43,11 +43,6 @@ pipeline {
                     )
                     cd /d C:\\deploy\\DevOPSLab1
 
-                    :: 1. Останавливаем старые процессы, чтобы освободить порты
-                    FOR /F "tokens=5" %%T IN ('netstat -a -n -o ^| findstr :8000') DO taskkill /F /PID %%T 2>nul
-                    FOR /F "tokens=5" %%T IN ('netstat -a -n -o ^| findstr :5173') DO taskkill /F /PID %%T 2>nul
-
-                    :: 2. Устанавливаем зависимости
                     if not exist .venv ("${PYTHON}" -m venv .venv)
                     .venv\\Scripts\\python.exe -m pip install -r requirements.txt
                     .venv\\Scripts\\python.exe manage.py migrate
@@ -56,21 +51,24 @@ pipeline {
                     call npm install
                     cd ..
 
-                    :: 3. Создаем bat-файл, который запустит серверы
-                    echo @echo off > C:\\deploy\\start_all.bat
-                    echo cd /d C:\\deploy\\DevOPSLab1 >> C:\\deploy\\start_all.bat
-                    echo start "Django Backend" cmd /c ".venv\\Scripts\\python.exe manage.py runserver" >> C:\\deploy\\start_all.bat
-                    echo cd client >> C:\\deploy\\start_all.bat
-                    echo start "Vite Frontend" cmd /c "npm run dev" >> C:\\deploy\\start_all.bat
+                    :: Удаляем старые службы, если они были (чтобы обновить пути)
+                    nssm stop WebGlebBackend 2>nul
+                    nssm remove WebGlebBackend confirm 2>nul
+                    nssm stop WebGlebFrontend 2>nul
+                    nssm remove WebGlebFrontend confirm 2>nul
+
+                    :: Создаем службу Бэкенда
+                    nssm install WebGlebBackend "C:\\deploy\\DevOPSLab1\\.venv\\Scripts\\python.exe" "manage.py runserver 0.0.0.0:8000"
+                    nssm set WebGlebBackend AppDirectory "C:\\deploy\\DevOPSLab1"
                     
-                    :: 4. Создаем VBS-скрипт, который запустит этот bat-файл СКРЫТО и отвяжет от Дженкинса
-                    echo Set WshShell = CreateObject("WScript.Shell") > C:\\deploy\\run.vbs
-                    echo WshShell.Run "C:\\deploy\\start_all.bat", 0, False >> C:\\deploy\\run.vbs
+                    :: Создаем службу Фронтенда
+                    nssm install WebGlebFrontend "C:\\Program Files\\nodejs\\npm.cmd" "run dev"
+                    nssm set WebGlebFrontend AppDirectory "C:\\deploy\\DevOPSLab1\\client"
+
+                    :: Запускаем обе службы
+                    nssm start WebGlebBackend
+                    nssm start WebGlebFrontend
                     
-                    :: 5. Запускаем VBS. Дженкинс больше не сможет убить эти процессы!
-                    wscript C:\\deploy\\run.vbs
-                    
-                    :: 6. Ждем 5 секунд, чтобы серверы успели подняться уа
                     ping 127.0.0.1 -n 6 > nul
                 """
             }
